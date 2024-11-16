@@ -16,6 +16,7 @@ import (
 	"github.com/axadjonovsardorbek/tender/config"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Params struct {
@@ -54,7 +55,7 @@ func SmsSender(c *gin.Context, err error, code int) {
 }
 
 func SendMessage(message string) error {
-	cf := config.LoadConfig()
+	cf := config.Load()
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", cf.BotToken)
 	params := url.Values{}
 	params.Add("chat_id", cf.GroupId)
@@ -124,4 +125,19 @@ func SendVerificationCode(params Params) error {
 	}
 
 	return nil
+}
+
+// HashPassword hashes a plaintext password
+func HashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+// CheckPasswordHash compares a plaintext password with its hash
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

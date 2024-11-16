@@ -4,7 +4,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/axadjonovsardorbek/tender/clients"
 	"github.com/axadjonovsardorbek/tender/config"
+	"github.com/axadjonovsardorbek/tender/internal"
 	"github.com/axadjonovsardorbek/tender/platform"
 
 	"github.com/gorilla/mux"
@@ -12,18 +14,18 @@ import (
 
 type App struct {
 	Router      *mux.Router
-	DB          *platform.Database
+	Storage     *platform.Storage
 	RedisClient *platform.Redis
 	WsHub       *platform.WebSocketHub
 }
 
 func (a *App) Initialize(cfg *config.Config) {
 	// Initialize database
-	db, err := platform.ConnectDatabase(cfg)
+	stg, err := platform.ConnectDatabase(cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	a.DB = db
+	a.Storage = stg
 
 	// Initialize Redis
 	redisClient := platform.ConnectRedis(cfg)
@@ -33,6 +35,16 @@ func (a *App) Initialize(cfg *config.Config) {
 	wsHub := platform.NewWebSocketHub()
 	a.WsHub = wsHub
 	go wsHub.Run()
+
+	services, err := clients.NewClients(cfg, stg)
+	if err != nil {
+		log.Fatalf("error while connecting clients. err: %s", err.Error())
+	}
+
+	handler := internal.NewHandler(*services)
+
+	// Setup router
+	internal.RegisterRoutes(a.Router, handler)
 
 	// Setup Router
 	a.Router = mux.NewRouter()
@@ -48,8 +60,8 @@ func (a *App) Run(serverPort string) {
 
 func (a *App) Close() {
 	// Close database connection
-	if a.DB != nil {
-		a.DB.Close()
+	if a.Storage != nil {
+		a.Storage.Close()
 	}
 	// Close Redis connection
 	if a.RedisClient != nil {

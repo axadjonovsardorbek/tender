@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/axadjonovsardorbek/tender/config"
-	"github.com/redis/go-redis/v9"
+	"github.com/go-redis/redis/v8"
 )
 
 // Redis wraps the Redis client

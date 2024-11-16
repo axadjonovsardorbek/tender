@@ -20,7 +20,7 @@ import (
 )
 
 type AuthI interface {
-	Register(context.Context, *models.RegisterReq) (*models.Void, error)
+	Register(context.Context, *models.RegisterReq) (*models.TokenRes, error)
 	Login(context.Context, *models.LoginReq) (*models.TokenRes, error)
 	GetProfile(context.Context, string) (*models.UserRes, error)
 	UpdateProfile(context.Context, *models.UpdateReq) (*models.Void, error)
