@@ -36,7 +36,7 @@ func ConnectDatabase(cfg *config.Config) (*Storage, error) {
 	}
 
 	tender := tender.NewTenderRepository(db)
-	auth := auth.NewAuthRepository(db)
+	auth := auth.NewAuthRepo(db)
 
 	log.Println("Connected to the Postgres database.")
 	return &Storage{

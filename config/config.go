@@ -9,15 +9,19 @@ import (
 )
 
 type Config struct {
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	RedisHost  string
-	RedisPort  string
-	JWTSecret  string
-	ServerPort string
+	DBHost        string
+	DBPort        string
+	DBUser        string
+	DBPassword    string
+	DBName        string
+	RedisHost     string
+	RedisPort     string
+	JWTSecret     string
+	ServerPort    string
+	GroupId       string
+	BotToken      string
+	EmailName     string
+	EmailPassword string
 }
 
 func Load() Config {

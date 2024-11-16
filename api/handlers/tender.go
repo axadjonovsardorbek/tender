@@ -1,10 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"fmt"
+	"log/slog"
 
 	"github.com/axadjonovsardorbek/tender/pkg/models"
+	"github.com/gin-gonic/gin"
 )
 
 // CreateTender godoc
@@ -19,20 +21,23 @@ import (
 // @Failure 500 {object} string "Server error"
 // @Security BearerAuth
 // @Router /tender/create [post]
-func (h *Handler) CreateTender(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateTender(c *gin.Context) {
+	fmt.Println("ssssssssssssssssssssssssssss")
 	var req models.Tender
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
-	res, err := h.Clients.Tender.CreateTender(r.Context(), req)
+	err := c.BindJSON(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(400, gin.H{"Error": err})
+		slog.Error("Error binding request body: ", err)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(res)
+	res, err := h.Clients.Tender.CreateTender(context.TODO(), req)
+	if err!= nil {
+        c.JSON(500, gin.H{"Error": err})
+        slog.Error("Error creating tender: ", err)
+        return
+    }
+
+	c.JSON(201, res)
 }

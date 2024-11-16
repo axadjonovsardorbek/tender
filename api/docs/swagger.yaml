@@ -1,5 +1,23 @@
 basePath: /
 definitions:
+  models.LoginReq:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  models.RegisterReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
   models.Tender:
     properties:
       budget:
@@ -18,12 +36,206 @@ definitions:
       title:
         type: string
     type: object
+  models.TokenRes:
+    properties:
+      access_token:
+        type: string
+      id:
+        type: string
+      refresh_token:
+        type: string
+      role:
+        type: string
+    type: object
+  models.UpdateReq:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UserRes:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
 info:
   contact: {}
-  description: API for Tender
-  title: Tender
+  description: API for Pima
+  title: Pima
   version: "1.0"
 paths:
+  /img-upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: File upload
+      parameters:
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: File upload
+      tags:
+      - file-upload
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with username and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: admin
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT tokens
+          schema:
+            $ref: '#/definitions/models.TokenRes'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - auth
+  /profile:
+    post:
+      consumes:
+      - application/json
+      description: Get profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserRes'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: Profile
+      tags:
+      - auth
+  /profile/delete:
+    post:
+      consumes:
+      - application/json
+      description: Delete profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted profile
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: DeleteProfile
+      tags:
+      - auth
+  /profile/update:
+    post:
+      consumes:
+      - application/json
+      description: Update profile
+      parameters:
+      - description: Update request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated profile
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      summary: UpdateProfile
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register
+      parameters:
+      - description: Registration request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: JWT tokens
+          schema:
+            $ref: '#/definitions/models.TokenRes'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Register
+      tags:
+      - auth
   /tender/create:
     post:
       consumes:

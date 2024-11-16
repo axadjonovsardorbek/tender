@@ -1,27 +1,48 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
+	"time"
 
 	"github.com/axadjonovsardorbek/tender/api/handlers"
-	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "github.com/axadjonovsardorbek/tender/api/docs"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title Tender
+// @title Pima
 // @version 1.0
-// @description API for Tender
+// @description API for Pima
 // @BasePath /
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-func RegisterRoutes(r *mux.Router, h *handlers.Handler) {
-	// Swagger UI ko'rsatish
-	r.Handle("/api/swagger/", http.StripPrefix("/api/swagger/", http.FileServer(http.Dir("./swaggerui"))))
-	r.Handle("/swagger/*", httpSwagger.WrapHandler)
+func NewApi(h *handlers.Handler) *gin.Engine {
+	fmt.Println("qqqqqqqqqqqqqqqqqqqqq")
+	router := gin.Default()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
-	// Tenders endpoint
-	r.HandleFunc("/tenders", h.CreateTender).Methods("POST")
-	// r.HandleFunc("/tenders/{id:[0-9]+}", handler.GetTender).Methods("GET")
-	// r.HandleFunc("/tenders", handler.ListTenders).Methods("GET")
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           24 * time.Hour,
+	}))
+
+	router.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	fmt.Println("ddddddddddddddd")
+
+	router.POST("tender/create", h.CreateTender)
+
+	router.POST("/img-upload", h.UploadFile)
+
+	return router
 }
