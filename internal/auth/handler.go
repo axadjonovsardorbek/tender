@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/axadjonovsardorbek/tender/pkg/models"
@@ -39,7 +40,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	res, err := h.Auth.Register(body)
+	res, err := h.Auth.Register(context.Background(), &body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -75,7 +76,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	res, err := h.Auth.Login(body)
+	res, err := h.Auth.Login(context.Background(), &body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -102,7 +103,7 @@ func (h *AuthHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	res, err := h.Auth.GetProfile(user_id)
+	res, err := h.Auth.GetProfile(context.Background(), user_id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -111,6 +112,47 @@ func (h *AuthHandler) Profile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// UpdateProfile godoc
+// @Summary UpdateProfile
+// @Description Update profile
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body models.UpdateReq true  "Update request"
+// @Success 200 {object} string "Updated profile"
+// @Failure 400 {object} string "Invalid request payload"
+// @Failure 500 {object} string "Server error"
+// @Router /profile/update [post]
+func (h *AuthHandler) UpdateProfile(c *gin.Context) {
+	user_id := hp.ClaimData(c, "user_id")
+	if user_id == "" {
+		return
+	}
+
+	var body models.UpdateReq
+
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		hp.SmsSender(c, err, http.StatusBadRequest)
+		return
+	}
+
+	if (body.Email != "" && body.Email != "string") || !hp.IsValidEmail(body.Email){
+		c.JSON(409, gin.H{"message": "Incorrect email"})
+		return
+	}
+
+	_, err := h.Auth.UpdateProfile(context.Background(), &body)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		hp.SmsSender(c, err, http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Updated profile"})
 }
 
 // DeleteProfile godoc
@@ -129,7 +171,7 @@ func (h *AuthHandler) DeleteProfile(c *gin.Context) {
 		return
 	}
 
-	err := h.Auth.DeleteProfile(user_id)
+	_, err := h.Auth.DeleteProfile(context.Background(), user_id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -19,6 +19,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type AuthI interface {
+	Register(context.Context, *models.RegisterReq) (*models.Void, error)
+	Login(context.Context, *models.LoginReq) (*models.TokenRes, error)
+	GetProfile(context.Context, string) (*models.UserRes, error)
+	UpdateProfile(context.Context, *models.UpdateReq) (*models.Void, error)
+	DeleteProfile(context.Context, string) (*models.Void, error)
+}
+
 type AuthRepo struct {
 	db  *sql.DB
 	rdb *redis.Client
@@ -28,7 +36,7 @@ func NewAuthRepo(db *sql.DB, rdb *redis.Client) *AuthRepo {
 	return &AuthRepo{db: db, rdb: rdb}
 }
 
-func (r *AuthRepo) Register(req *models.RegisterReq) (*models.TokenRes, error) {
+func (r *AuthRepo) Register(ctx context.Context, req *models.RegisterReq) (*models.TokenRes, error) {
 	id := uuid.New().String()
 
 	query := `
@@ -62,7 +70,7 @@ func (r *AuthRepo) Register(req *models.RegisterReq) (*models.TokenRes, error) {
 		Id:           id,
 	}, nil
 }
-func (r *AuthRepo) Login(req *models.LoginReq) (*models.TokenRes, error) {
+func (r *AuthRepo) Login(ctx context.Context, req *models.LoginReq) (*models.TokenRes, error) {
 	var id string
 	var role string
 	var password string
@@ -111,7 +119,7 @@ func (r *AuthRepo) Login(req *models.LoginReq) (*models.TokenRes, error) {
 	}, nil
 }
 
-func (r *AuthRepo) GetProfile(id string) (*models.UserRes, error) {
+func (r *AuthRepo) GetProfile(ctx context.Context, id string) (*models.UserRes, error) {
 	userData, err := r.rdb.Get(context.Background(), id).Result()
 	if err == redis.Nil {
 		user := models.UserRes{}
@@ -171,7 +179,7 @@ func (r *AuthRepo) GetProfile(id string) (*models.UserRes, error) {
 	}
 	return &user, nil
 }
-func (r *AuthRepo) Update(req *models.UpdateReq) error {
+func (r *AuthRepo) UpdateProfile(ctx context.Context, req *models.UpdateReq) (*models.Void, error) {
 	query := `
 	UPDATE 
 		users
@@ -191,7 +199,7 @@ func (r *AuthRepo) Update(req *models.UpdateReq) error {
 	}
 
 	if len(conditions) == 0 {
-		return errors.New("nothing to update")
+		return nil, errors.New("nothing to update")
 	}
 
 	conditions = append(conditions, " updated_at = now()")
@@ -203,22 +211,22 @@ func (r *AuthRepo) Update(req *models.UpdateReq) error {
 	res, err := r.db.Exec(query, args...)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if r, err := res.RowsAffected(); r == 0 {
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return fmt.Errorf("user with id %s couldn't update", req.Id)
+		return nil, fmt.Errorf("user with id %s couldn't update", req.Id)
 	}
 
 	log.Println("Successfully updated user")
 
-	return nil
+	return nil, nil
 }
 
-func (r *AuthRepo) DeleteProfile(id string) error {
+func (r *AuthRepo) DeleteProfile(ctx context.Context, id string) (*models.Void, error) {
 	query := `
 	UPDATE 
 		users
@@ -233,15 +241,15 @@ func (r *AuthRepo) DeleteProfile(id string) error {
 	res, err := r.db.Exec(query, id)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if r, err := res.RowsAffected(); r == 0 {
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return fmt.Errorf("user with id %s not found", id)
+		return nil, fmt.Errorf("user with id %s not found", id)
 	}
 
-	return nil
+	return nil, nil
 }
