@@ -1,26 +1,89 @@
-version: '3.8'
+version: '3.9'
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-      - redis
+  migrate-road:
+      image: migrate/migrate
+      networks: 
+        - tender
+      volumes:
+        - ./migrations:/migrations
+      command: [ "-path", "/migrations", "-database", "postgres://postgres:feruza1727@db:5432/tender?sslmode=disable", "up" ]
+      depends_on:
+        - db
 
   db:
     image: postgres:15
+    container_name: tender_db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: tender_management
+      POSTGRES_PASSWORD: feruza1727
+      POSTGRES_DB: tender
+      PGDATA: /data/postgres
     ports:
       - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgres/data
+    networks:
+      - tender
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
+    container_name: tender_redis
     ports:
       - "6379:6379"
+    networks:
+      - tender
+
+  tender:
+    build: .
+    container_name: tender_app
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8080:8080"
+    networks:
+      - tender
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: feruza1727
+      DB_NAME: tender
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: tender_secret_key
+      SERVER_PORT: ":8080"
+    command: ["./main"]
+
+  minio:
+    image: minio/minio
+    container_name: tender_minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+      - MINIO_ENDPOINT=minio:9000
+    ports:
+      - "9001:9001"   
+      - "9000:9000" 
+    command: server /data --console-address ":9001"
+    volumes:
+        - minio_data:/data
+    networks:
+      - tender
+
+  networks:
+    tender:
+      name: tender
+      external: true
+      driver: bridge
+
+volumes:
+  db_data:
+  minio_data:

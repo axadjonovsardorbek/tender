@@ -1,10 +1,11 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/spf13/cast"
 )
 
 type Config struct {
@@ -19,21 +20,35 @@ type Config struct {
 	ServerPort string
 }
 
-func LoadConfig() *Config {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+func Load() Config {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("No .env file found")
 	}
 
-	return &Config{
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     os.Getenv("DB_PORT"),
-		DBUser:     os.Getenv("DB_USER"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
-		DBName:     os.Getenv("DB_NAME"),
-		RedisHost:  os.Getenv("REDIS_HOST"),
-		RedisPort:  os.Getenv("REDIS_PORT"),
-		JWTSecret:  os.Getenv("JWT_SECRET"),
-		ServerPort:  os.Getenv("SERVER_PORT"),
+	config := Config{}
+
+	config.DBHost = cast.ToString(coalesce("DB_HOST", "localhost"))
+	config.DBPort = cast.ToString(coalesce("DB_PORT", 5432))
+	config.DBUser = cast.ToString(coalesce("DB_USER", "postgres"))
+	config.DBPassword = cast.ToString(coalesce("DB_PASSWORD", "password"))
+	config.DBName = cast.ToString(coalesce("DB_NAME", "dbname"))
+
+	config.RedisHost = cast.ToString(coalesce("REDIS_HOST", "localhost"))
+	config.RedisPort = cast.ToString(coalesce("REDIS_PORT", ":6379"))
+
+	config.JWTSecret = cast.ToString(coalesce("SMS_TOKEN", "my_secret"))
+
+	config.ServerPort = cast.ToString(coalesce("SERVER_PORT", ":8080"))
+
+	return config
+}
+
+func coalesce(key string, defaultValue interface{}) interface{} {
+	val, exists := os.LookupEnv(key)
+
+	if exists {
+		return val
 	}
+
+	return defaultValue
 }

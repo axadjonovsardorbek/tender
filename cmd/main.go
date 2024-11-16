@@ -7,11 +7,11 @@ import (
 
 func main() {
 	// Load configuration
-	cfg := config.LoadConfig()
+	cfg := config.Load()
 
 	// Initialize the app
 	app := &app.App{}
-	app.Initialize(cfg)
+	app.Initialize(&cfg)
 	defer app.Close()
 
 	// Run the server
