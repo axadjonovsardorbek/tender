@@ -1,0 +1,64 @@
+basePath: /
+definitions:
+  models.Tender:
+    properties:
+      budget:
+        type: number
+      client_id:
+        type: integer
+      deadline:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        description: '"open", "closed", "awarded"'
+        type: string
+      title:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API for Tender
+  title: Tender
+  version: "1.0"
+paths:
+  /tender/create:
+    post:
+      consumes:
+      - application/json
+      description: Create Tender
+      parameters:
+      - description: Create Tender
+        in: body
+        name: admin
+        required: true
+        schema:
+          $ref: '#/definitions/models.Tender'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Create Tender
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create Tender
+      tags:
+      - Tender
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

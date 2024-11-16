@@ -1,8 +1,10 @@
-package tender
+package handlers
 
 import (
+	"encoding/json"
+	"net/http"
+
 	"github.com/axadjonovsardorbek/tender/pkg/models"
-	"github.com/gin-gonic/gin"
 )
 
 // CreateTender godoc
@@ -17,18 +19,20 @@ import (
 // @Failure 500 {object} string "Server error"
 // @Security BearerAuth
 // @Router /tender/create [post]
-func (h *handler) CreateTender(c *gin.Context) {
+func (h *Handler) CreateTender(w http.ResponseWriter, r *http.Request) {
 	var req models.Tender
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	res, err := h.Clients.Tender.CreateTender(c.Request.Context(), req)
+	res, err := h.Clients.Tender.CreateTender(r.Context(), req)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(201, res)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(res)
 }

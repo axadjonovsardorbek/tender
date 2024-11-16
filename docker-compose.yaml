@@ -2,14 +2,14 @@ version: '3.9'
 
 services:
   migrate-road:
-      image: migrate/migrate
-      networks: 
-        - tender
-      volumes:
-        - ./migrations:/migrations
-      command: [ "-path", "/migrations", "-database", "postgres://postgres:feruza1727@db:5432/tender?sslmode=disable", "up" ]
-      depends_on:
-        - db
+    image: migrate/migrate
+    networks:
+      - tender
+    volumes:
+      - ./migrations:/migrations
+    command: [ "-path", "/migrations", "-database", "postgres://postgres:feruza1727@db:5432/tender?sslmode=disable", "up" ]
+    depends_on:
+      - db
 
   db:
     image: postgres:15
@@ -70,19 +70,18 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin123
       - MINIO_ENDPOINT=minio:9000
     ports:
-      - "9001:9001"   
-      - "9000:9000" 
+      - "9001:9001"
+      - "9000:9000"
     command: server /data --console-address ":9001"
     volumes:
-        - minio_data:/data
+      - minio_data:/data
     networks:
       - tender
 
-  networks:
-    tender:
-      name: tender
-      external: true
-      driver: bridge
+networks:
+  tender:
+    external: true
+    driver: bridge
 
 volumes:
   db_data:

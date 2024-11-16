@@ -1,5 +1,5 @@
 # File: Dockerfile
-FROM golang:1.20
+FROM golang:1.22
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN go build -o main .
+RUN go build -o main cmd/main.go
 
 # Expose the application port
 EXPOSE 8080

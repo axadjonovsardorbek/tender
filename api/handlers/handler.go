@@ -1,4 +1,4 @@
-package internal
+package handlers
 
 import "github.com/axadjonovsardorbek/tender/clients"
 

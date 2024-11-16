@@ -15,3 +15,9 @@ run:
 # Stop the entire application
 stop:
 	docker-compose down
+
+swag-init:
+	swag init -g api/api.go -o api/docs
+
+swag-gen:
+	~/go/bin/swag init -g ./api/router.go -o api/docs force 1

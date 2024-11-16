@@ -4,9 +4,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/axadjonovsardorbek/tender/api"
+	"github.com/axadjonovsardorbek/tender/api/handlers"
 	"github.com/axadjonovsardorbek/tender/clients"
 	"github.com/axadjonovsardorbek/tender/config"
-	"github.com/axadjonovsardorbek/tender/internal"
 	"github.com/axadjonovsardorbek/tender/platform"
 
 	"github.com/gorilla/mux"
@@ -41,14 +42,13 @@ func (a *App) Initialize(cfg *config.Config) {
 		log.Fatalf("error while connecting clients. err: %s", err.Error())
 	}
 
-	handler := internal.NewHandler(*services)
-
-	// Setup router
-	internal.RegisterRoutes(a.Router, handler)
+	handler := handlers.NewHandler(*services)
 
 	// Setup Router
 	a.Router = mux.NewRouter()
-	// TODO: Add routes here
+
+	// Setup router
+	api.RegisterRoutes(a.Router, handler)
 }
 
 func (a *App) Run(serverPort string) {
