@@ -1,14 +1,17 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/axadjonovsardorbek/tender/api"
 	"github.com/axadjonovsardorbek/tender/api/handlers"
 	"github.com/axadjonovsardorbek/tender/clients"
 	"github.com/axadjonovsardorbek/tender/config"
 	"github.com/axadjonovsardorbek/tender/platform"
+	"github.com/axadjonovsardorbek/tender/platform/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
@@ -17,7 +20,7 @@ type App struct {
 	Router      *gin.Engine
 	Storage     *platform.Storage
 	RedisClient *redis.Client
-	WsHub       *platform.WebSocketHub
+	WsHub       *websocket.Client
 	MinIO       *platform.MinIO
 }
 
@@ -33,10 +36,16 @@ func (a *App) Initialize(cfg *config.Config) {
 	redisClient := platform.ConnectRedis(cfg)
 	a.RedisClient = redisClient.Client
 
+	time.Sleep(2 * time.Second)
+
 	// Initialize WebSocket
-	wsHub := platform.NewWebSocketHub()
-	a.WsHub = wsHub
-	go wsHub.Run()
+	go func() {
+		http.HandleFunc("/ws", websocket.HandleWebSocket)
+		fmt.Println("WebSocket server starting on :7070")
+		if err := http.ListenAndServe(":7070", nil); err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
+	}()
 
 	//Initialize MinIO
 	minioClient, err := platform.MinIOConnect(cfg)

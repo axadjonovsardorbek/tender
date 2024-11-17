@@ -67,16 +67,15 @@ func (h *Handler) CreateTender(c *gin.Context) {
 // @Tags Tender
 // @Accept application/json
 // @Produce application/json
+// @Param client_id query string false "Client ID"
 // @Success 200 {object} string "Success list tenders"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
 // @Security BearerAuth
 // @Router /client/tenders [get]
 func (h *Handler) ListTenders(c *gin.Context) {
-	user_id := hp.GetUserId(c)
-
 	req := &models.GetAllTenderReq{
-		ClientID: user_id,
+		ClientID: c.Query("client_id"),
 	}
 
 	cacheKey := "tenders:"

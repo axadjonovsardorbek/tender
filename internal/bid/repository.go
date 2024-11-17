@@ -3,12 +3,14 @@ package bid
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
 	"github.com/axadjonovsardorbek/tender/pkg/models"
+	"github.com/axadjonovsardorbek/tender/platform/websocket"
 	"github.com/google/uuid"
 )
 
@@ -31,6 +33,11 @@ func NewBidRepo(db *sql.DB) *BidRepo {
 func (r *BidRepo) Create(ctx context.Context, req *models.CreateBidReq) (*models.Void, error) {
 	id := uuid.New().String()
 
+	tr, err := r.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
 	query := `
 	INSERT INTO bids(
 		id,
@@ -42,14 +49,58 @@ func (r *BidRepo) Create(ctx context.Context, req *models.CreateBidReq) (*models
 	) VALUES($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := r.db.Exec(query, id, req.TenderId, req.ContractorId, req.Price, req.DeliveryTime, req.Comments)
-
+	_, err = tr.Exec(query, id, req.TenderId, req.ContractorId, req.Price, req.DeliveryTime, req.Comments)
 	if err != nil {
+		tr.Rollback()
 		fmt.Println("error while creating bid")
 		return nil, err
 	}
-	return nil, nil
+
+	var user_id string
+	query = `SELECT user_id FROM tenders WHERE id = $1`
+	err = tr.QueryRow(query, req.TenderId).Scan(&user_id)
+	if err != nil {
+		tr.Rollback()
+		return nil, err
+	}
+
+	message := fmt.Sprintf("price: %d, delivery_time: %d, comments: %s", req.Price, req.DeliveryTime, req.Comments)
+
+	query = `INSERT INTO notifications(
+				user_id,
+				message,
+				relation_id,
+				type
+			) VALUES($1, $2, $3, $4)`
+	_, err = tr.Exec(query, user_id, message, id, "bid")
+	if err != nil {
+		tr.Rollback()
+		return nil, err
+	}
+
+	if err = tr.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Send the notification to WebSocket clients
+	notification := map[string]interface{}{
+		"user_id": user_id,
+		"message": message,
+		"type":    "bid",
+	}
+	notificationJSON, err := json.Marshal(notification)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		message := []byte(notificationJSON)
+		websocket.BroadcastMessage(message)
+	}()
+
+	return &models.Void{}, nil
 }
+
 func (r *BidRepo) GetById(ctx context.Context, id string) (*models.BidRes, error) {
 	bid := models.BidRes{}
 	query := `
