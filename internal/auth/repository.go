@@ -117,37 +117,37 @@ func (r *AuthRepo) Login(ctx context.Context, req *models.LoginReq) (*models.Tok
 }
 
 func (r *AuthRepo) IsEmailExist(ctx context.Context, email string) (bool, error) {
-    query := `SELECT email FROM users WHERE email = $1 AND deleted_at = 0`
+	query := `SELECT email FROM users WHERE email = $1 AND deleted_at = 0`
 	row := r.db.QueryRow(query, email)
-	
+
 	var emailExists string
 	err := row.Scan(&emailExists)
 	if err == sql.ErrNoRows {
-        return false, nil
-    }
-	if err!= nil {
-        return false, err
-    }
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
 
-	return emailExists!= "", nil
+	return emailExists != "", nil
 }
 
 func (r *AuthRepo) GetProfile(ctx context.Context, id string) (*models.UserRes, error) {
 	user := models.UserRes{}
 	query := `
-SELECT
-	id,
-	username,
-	email,
-	to_char(created_at, 'YYYY-MM-DD HH24:MI'),
-	role
-FROM
-	users
-WHERE
-	id = $1
-AND
-	deleted_at = 0
-`
+	SELECT
+		id,
+		username,
+		email,
+		to_char(created_at, 'YYYY-MM-DD HH24:MI'),
+		role
+	FROM
+		users
+	WHERE
+		id = $1
+	AND
+		deleted_at = 0
+	`
 
 	row := r.db.QueryRow(query, id)
 	err := row.Scan(
