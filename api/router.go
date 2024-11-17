@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/axadjonovsardorbek/tender/api/handlers"
+	"github.com/axadjonovsardorbek/tender/pkg/middleware"
 
 	_ "github.com/axadjonovsardorbek/tender/api/docs"
 	"github.com/gin-contrib/cors"
@@ -39,14 +40,17 @@ func NewApi(h *handlers.Handler) *gin.Engine {
 	
 	router.POST("/register", h.Register)
 	router.POST("/login", h.Login)
-	router.GET("/profile", h.Profile)
-	router.PUT("/profile/update", h.UpdateProfile)
-	router.DELETE("/profile/delete", h.DeleteProfile)
+	router.GET("/profile", h.Profile).Use(middleware.AuthMiddleware())
+	router.PUT("/profile/update", h.UpdateProfile).Use(middleware.AuthMiddleware())
+	router.DELETE("/profile/delete", h.DeleteProfile).Use(middleware.AuthMiddleware())
 	
 
-	client := router.Group("/client")
+	client := router.Group("/client").Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("client"))
 	{
 		client.POST("/tenders", h.CreateTender)
+		client.GET("/tenders", h.ListTenders)
+		client.PUT("/tenders/:id", h.UpdateTender)
+		client.DELETE("/tenders/:id", h.DeleteTender)
 	}
 	
 	router.POST("/img-upload", h.UploadFile)

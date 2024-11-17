@@ -15,65 +15,14 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/login": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Authenticate user with username and password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Login",
-                "parameters": [
-                    {
-                        "description": "Login credentials",
-                        "name": "admin",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.LoginReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "JWT tokens",
-                        "schema": {
-                            "$ref": "#/definitions/models.TokenRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/profile": {
+        "/client/tenders": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get profile",
+                "description": "List Tender",
                 "consumes": [
                     "application/json"
                 ],
@@ -81,14 +30,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Tender"
                 ],
-                "summary": "Profile",
+                "summary": "List Tender",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Success list tenders",
                         "schema": {
-                            "$ref": "#/definitions/models.UserRes"
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -104,16 +53,14 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/auth/profile/delete": {
-            "delete": {
+            },
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete profile",
+                "description": "Create Tender",
                 "consumes": [
                     "application/json"
                 ],
@@ -121,12 +68,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Tender"
                 ],
-                "summary": "DeleteProfile",
+                "summary": "Create Tender",
+                "parameters": [
+                    {
+                        "description": "Create Tender",
+                        "name": "tender",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateTenderReq"
+                        }
+                    }
+                ],
                 "responses": {
-                    "200": {
-                        "description": "Deleted profile",
+                    "201": {
+                        "description": "Create Tender",
                         "schema": {
                             "type": "string"
                         }
@@ -146,14 +104,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/profile/update": {
+        "/client/tenders/{id}": {
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update profile",
+                "description": "Update Tender",
                 "consumes": [
                     "application/json"
                 ],
@@ -161,23 +119,29 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Tender"
                 ],
-                "summary": "UpdateProfile",
+                "summary": "Update Tender",
                 "parameters": [
                     {
-                        "description": "Update request",
-                        "name": "user",
+                        "type": "string",
+                        "description": "Tender ID",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Create Tender",
+                        "name": "tender",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.UpdateReq"
+                            "$ref": "#/definitions/models.UpdateStatus"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated profile",
+                        "description": "Tender status updated",
                         "schema": {
                             "type": "string"
                         }
@@ -195,19 +159,14 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/auth/register": {
-            "post": {
+            },
+            "delete": {
                 "security": [
-                    {
-                        "BearerAuth": []
-                    },
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Register",
+                "description": "Delete Tender",
                 "consumes": [
                     "application/json"
                 ],
@@ -215,25 +174,22 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Tender"
                 ],
-                "summary": "Register",
+                "summary": "Delete Tender",
                 "parameters": [
                     {
-                        "description": "Registration request",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.RegisterReq"
-                        }
+                        "type": "string",
+                        "description": "Tender ID",
+                        "name": "id",
+                        "in": "query"
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "JWT tokens",
+                    "200": {
+                        "description": "Tender deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/models.TokenRes"
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -288,14 +244,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/tender/create": {
+        "/login": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Create Tender",
+                "description": "Authenticate user with username and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -303,25 +254,207 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Tender"
+                    "auth"
                 ],
-                "summary": "Create Tender",
+                "summary": "Login",
                 "parameters": [
                     {
-                        "description": "Create Tender",
+                        "description": "Login credentials",
                         "name": "admin",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Tender"
+                            "$ref": "#/definitions/models.LoginReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWT tokens",
+                        "schema": {
+                            "$ref": "#/definitions/models.TokenRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "DeleteProfile",
+                "responses": {
+                    "200": {
+                        "description": "Deleted profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/update": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "UpdateProfile",
+                "parameters": [
+                    {
+                        "description": "Update request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Register",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register",
+                "parameters": [
+                    {
+                        "description": "Registration request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RegisterReq"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Create Tender",
+                        "description": "JWT tokens",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.TokenRes"
                         }
                     },
                     "400": {
@@ -341,6 +474,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.CreateTenderReq": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "type": "number"
+                },
+                "deadline": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "models.LoginReq": {
             "type": "object",
             "properties": {
@@ -365,29 +518,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Tender": {
-            "type": "object",
-            "properties": {
-                "budget": {
-                    "type": "number"
-                },
-                "client_id": {
-                    "type": "string"
-                },
-                "deadline": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "title": {
                     "type": "string"
                 }
             }
@@ -419,6 +549,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateStatus": {
+            "type": "object",
+            "properties": {
+                "status": {
                     "type": "string"
                 }
             }

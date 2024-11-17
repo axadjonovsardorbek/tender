@@ -12,9 +12,16 @@ stop_db:
 
 run:
 	docker-compose up --build
+	docker compose up
 
 stop:
 	docker-compose down
+
+migrate:
+	docker-compose run --rm migrate-road
+
+logs:
+	docker-compose logs -f
 
 migrate_up:
 	migrate -path migrations -database postgres://postgres:1111@localhost:5432/pima?sslmode=disable -verbose up
@@ -36,10 +43,6 @@ build:
 
 swag-init:
 	swag init -g api/api.go -o api/docs
-
-swag-gen:
-	~/go/bin/swag init -g api/router.go -o api/docs
-
 
 swag-gen:
 	~/go/bin/swag init -g ./api/router.go -o api/docs force 1	

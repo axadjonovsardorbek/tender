@@ -21,9 +21,14 @@ type UserRes struct {
 }
 
 type UpdateReq struct {
-	Id        string `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
+	Id       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+type UpdateProfile struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 type TokenRes struct {
