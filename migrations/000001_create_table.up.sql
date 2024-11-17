@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS tenders (
     deadline TIMESTAMP NOT NULL,
     budget BIGINT NOT NULL CHECK (budget > 0),
     status status_tender DEFAULT 'open',
+    file_url VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at BIGINT NOT NULL DEFAULT 0

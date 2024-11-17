@@ -2,12 +2,16 @@ package handlers
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/axadjonovsardorbek/tender/pkg/models"
 	hp "github.com/axadjonovsardorbek/tender/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
+
+// var user_id string
 
 // Register godoc
 // @Summary Register
@@ -20,7 +24,6 @@ import (
 // @Success 201 {object} models.TokenRes "JWT tokens"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
-// @Security BearerAuth
 // @Router /register [post]
 func (h *Handler) Register(c *gin.Context) {
 
@@ -32,21 +35,26 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	if body.Email == "" || body.Username == ""  {
+	if body.Email == "" || body.Username == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "username or email cannot be empty"})
 		return
 	}
 
+	if body.Role != "client" && body.Role != "contractor" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid role"})
+		return
+	}
+
 	emailExists, err := h.Clients.Auth.IsEmailTaken(context.Background(), body.Email)
-	if !emailExists {
+	if emailExists {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Email already exists"})
 		return
 	}
-	if err!= nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        hp.SmsSender(c, err, http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		hp.SmsSender(c, err, http.StatusInternalServerError)
+		return
+	}
 
 	if !hp.IsValidEmail(body.Email) {
 		c.JSON(400, gin.H{"message": "username or email cannot be empty"})
@@ -56,7 +64,7 @@ func (h *Handler) Register(c *gin.Context) {
 	res, err := h.Clients.Auth.Register(context.Background(), &body)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}
@@ -70,7 +78,6 @@ func (h *Handler) Register(c *gin.Context) {
 // @Tags auth
 // @Accept application/json
 // @Produce application/json
-// @Security BearerAuth
 // @Param admin body models.LoginReq true "Login credentials"
 // @Success 200 {object} models.TokenRes "JWT tokens"
 // @Failure 400 {object} string "Invalid request payload"
@@ -97,7 +104,7 @@ func (h *Handler) Login(c *gin.Context) {
 		} else if err.Error() == "invalid password" {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid username or password"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Serverda xatolik"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 			hp.SmsSender(c, err, http.StatusInternalServerError)
 		}
 		return
@@ -118,18 +125,31 @@ func (h *Handler) Login(c *gin.Context) {
 // @Failure 500 {object} string "Server error"
 // @Router /profile [get]
 func (h *Handler) Profile(c *gin.Context) {
-	user_id := hp.ClaimData(c, "user_id")
-	if user_id == "" {
+
+	user_id := hp.GetUserId(c)
+
+	cacheKey := user_id + ":"
+
+	res := models.UserRes{}
+
+	err := hp.GetCachedData(c, h.Redis, cacheKey, &res)
+	if err == nil {
+		slog.Info("user profile retrieved from cache")
+		c.JSON(200, res)
 		return
 	}
 
-	res, err := h.Clients.Auth.GetProfile(context.Background(), user_id)
-
+	fmt.Println("lllllllllllllllllll", user_id)
+	resp, err := h.Clients.Auth.GetProfile(context.Background(), user_id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}
+
+	res = *resp
+
+	hp.CacheData(c, h.Redis, cacheKey, res)
 
 	c.JSON(http.StatusOK, res)
 }
@@ -141,37 +161,45 @@ func (h *Handler) Profile(c *gin.Context) {
 // @Accept application/json
 // @Produce application/json
 // @Security BearerAuth
-// @Param user body models.UpdateReq true  "Update request"
+// @Param user body models.UpdateProfile true  "Update request"
 // @Success 200 {object} string "Updated profile"
 // @Failure 400 {object} string "Invalid request payload"
 // @Failure 500 {object} string "Server error"
 // @Router /profile/update [put]
 func (h *Handler) UpdateProfile(c *gin.Context) {
-	user_id := hp.ClaimData(c, "user_id")
-	if user_id == "" {
-		return
-	}
+	user_id := hp.GetUserId(c)
 
-	var body models.UpdateReq
+	cacheKey := user_id + ":"
+
+	var body models.UpdateProfile
 
 	if err := c.BindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		hp.SmsSender(c, err, http.StatusBadRequest)
 		return
 	}
 
-	if (body.Email != "" && body.Email != "string") || !hp.IsValidEmail(body.Email){
-		c.JSON(409, gin.H{"message": "Incorrect email"})
+	if (body.Email != "" && body.Email != "string") || !hp.IsValidEmail(body.Email) {
+		c.JSON(400, gin.H{"message": "Incorrect email"})
 		return
 	}
 
-	_, err := h.Clients.Auth.UpdateProfile(context.Background(), &body)
+	req := models.UpdateReq{
+		Id:       user_id,
+		Username: body.Username,
+		Email:    body.Email,
+	}
+
+	_, err := h.Clients.Auth.UpdateProfile(context.Background(), &req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}
+
+	// Clear relevant cache keys
+	h.Redis.Del(c, cacheKey)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Updated profile"})
 }
@@ -188,15 +216,12 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 // @Failure 500 {object} string "Server error"
 // @Router /profile/delete [delete]
 func (h *Handler) DeleteProfile(c *gin.Context) {
-	user_id := hp.ClaimData(c, "user_id")
-	if user_id == "" {
-		return
-	}
+	user_id := hp.GetUserId(c)
 
 	_, err := h.Clients.Auth.DeleteProfile(context.Background(), user_id)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}

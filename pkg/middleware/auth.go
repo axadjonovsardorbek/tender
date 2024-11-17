@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/axadjonovsardorbek/tender/pkg/utils"
 	"github.com/gin-gonic/gin"
@@ -17,14 +16,14 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == authHeader {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
-			c.Abort()
-			return
-		}
+		// token := strings.TrimPrefix(authHeader, "Bearer ")
+		// if token == authHeader {
+		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+		// 	c.Abort()
+		// 	return
+		// }
 
-		claims, err := utils.ExtractClaim(token)
+		claims, err := utils.ExtractClaim(authHeader)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()

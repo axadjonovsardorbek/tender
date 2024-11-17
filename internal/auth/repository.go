@@ -149,6 +149,8 @@ func (r *AuthRepo) GetProfile(ctx context.Context, id string) (*models.UserRes, 
 		deleted_at = 0
 	`
 
+fmt.Println("ssssssssssssssssssssss", id)
+
 	row := r.db.QueryRow(query, id)
 	err := row.Scan(
 		&user.Id,

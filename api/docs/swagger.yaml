@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  models.CreateTenderReq:
+    properties:
+      budget:
+        type: number
+      deadline:
+        type: string
+      description:
+        type: string
+      file_url:
+        type: string
+      title:
+        type: string
+    type: object
   models.LoginReq:
     properties:
       password:
@@ -16,21 +29,6 @@ definitions:
       role:
         type: string
       username:
-        type: string
-    type: object
-  models.Tender:
-    properties:
-      budget:
-        type: number
-      client_id:
-        type: string
-      deadline:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      title:
         type: string
     type: object
   models.TokenRes:
@@ -53,6 +51,11 @@ definitions:
       username:
         type: string
     type: object
+  models.UpdateStatus:
+    properties:
+      status:
+        type: string
+    type: object
   models.UserRes:
     properties:
       created_at:
@@ -72,7 +75,151 @@ info:
   title: Pima
   version: "1.0"
 paths:
-  /auth/login:
+  /client/tenders:
+    get:
+      consumes:
+      - application/json
+      description: List Tender
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success list tenders
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List Tender
+      tags:
+      - Tender
+    post:
+      consumes:
+      - application/json
+      description: Create Tender
+      parameters:
+      - description: Create Tender
+        in: body
+        name: tender
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTenderReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Create Tender
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create Tender
+      tags:
+      - Tender
+  /client/tenders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Tender
+      parameters:
+      - description: Tender ID
+        in: query
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tender deleted successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Delete Tender
+      tags:
+      - Tender
+    put:
+      consumes:
+      - application/json
+      description: Update Tender
+      parameters:
+      - description: Tender ID
+        in: query
+        name: id
+        type: string
+      - description: Create Tender
+        in: body
+        name: tender
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateStatus'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tender status updated
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Update Tender
+      tags:
+      - Tender
+  /img-upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: File upload
+      parameters:
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: File upload
+      tags:
+      - file-upload
+  /login:
     post:
       consumes:
       - application/json
@@ -99,12 +246,10 @@ paths:
           description: Server error
           schema:
             type: string
-      security:
-      - BearerAuth: []
       summary: Login
       tags:
       - auth
-  /auth/profile:
+  /profile:
     get:
       consumes:
       - application/json
@@ -129,7 +274,7 @@ paths:
       summary: Profile
       tags:
       - auth
-  /auth/profile/delete:
+  /profile/delete:
     delete:
       consumes:
       - application/json
@@ -154,7 +299,7 @@ paths:
       summary: DeleteProfile
       tags:
       - auth
-  /auth/profile/update:
+  /profile/update:
     put:
       consumes:
       - application/json
@@ -186,7 +331,7 @@ paths:
       summary: UpdateProfile
       tags:
       - auth
-  /auth/register:
+  /register:
     post:
       consumes:
       - application/json
@@ -215,65 +360,9 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      - BearerAuth: []
       summary: Register
       tags:
       - auth
-  /img-upload:
-    post:
-      consumes:
-      - multipart/form-data
-      description: File upload
-      parameters:
-      - description: File
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-      security:
-      - BearerAuth: []
-      summary: File upload
-      tags:
-      - file-upload
-  /tender/create:
-    post:
-      consumes:
-      - application/json
-      description: Create Tender
-      parameters:
-      - description: Create Tender
-        in: body
-        name: admin
-        required: true
-        schema:
-          $ref: '#/definitions/models.Tender'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Create Tender
-          schema:
-            type: string
-        "400":
-          description: Invalid request payload
-          schema:
-            type: string
-        "500":
-          description: Server error
-          schema:
-            type: string
-      security:
-      - BearerAuth: []
-      summary: Create Tender
-      tags:
-      - Tender
 securityDefinitions:
   BearerAuth:
     in: header

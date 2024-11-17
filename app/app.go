@@ -10,12 +10,13 @@ import (
 	"github.com/axadjonovsardorbek/tender/config"
 	"github.com/axadjonovsardorbek/tender/platform"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type App struct {
 	Router      *gin.Engine
 	Storage     *platform.Storage
-	RedisClient *platform.Redis
+	RedisClient *redis.Client
 	WsHub       *platform.WebSocketHub
 	MinIO       *platform.MinIO
 }
@@ -30,7 +31,7 @@ func (a *App) Initialize(cfg *config.Config) {
 
 	// Initialize Redis
 	redisClient := platform.ConnectRedis(cfg)
-	a.RedisClient = redisClient
+	a.RedisClient = redisClient.Client
 
 	// Initialize WebSocket
 	wsHub := platform.NewWebSocketHub()
@@ -51,7 +52,7 @@ func (a *App) Initialize(cfg *config.Config) {
 		log.Fatalf("error while connecting clients. err: %s", err.Error())
 	}
 
-	handler := handlers.NewHandler(*services, minioClient)
+	handler := handlers.NewHandler(*services, minioClient, a.RedisClient)
 
 	a.Router = api.NewApi(handler)
 }
