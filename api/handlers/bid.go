@@ -23,12 +23,9 @@ import (
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /tenders/{id}/bids [post]
+// @Router /client/tenders/{id}/bids [post]
 func (h *Handler) CreateBid(c *gin.Context) {
-	user_id := hp.ClaimData(c, "user_id")
-	if user_id == "" {
-		return
-	}
+	user_id := hp.GetUserId(c)
 	body := &models.ApiCreateBidReq{}
 	req := &models.CreateBidReq{}
 
@@ -69,7 +66,7 @@ func (h *Handler) CreateBid(c *gin.Context) {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /tenders/{id}/bids [get]
+// @Router /client/tenders/{id}/bids [get]
 func (h *Handler) GetByIdBid(c *gin.Context) {
 	bid_id := c.Query("id")
 
@@ -102,7 +99,7 @@ func (h *Handler) GetByIdBid(c *gin.Context) {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /tenders/{id}/award/{bid_id} [put]
+// @Router /client/tenders/{id}/award/{bid_id} [put]
 func (h *Handler) UpdateBid(c *gin.Context) {
 	reqBody := models.ApiUpdateBidReq{}
 
@@ -148,7 +145,7 @@ func (h *Handler) UpdateBid(c *gin.Context) {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /tenders/{id}/bids [get]
+// @Router /client/tenders/{id}/bid [get]
 func (h *Handler) GetAllBids(c *gin.Context) {
 	tender_id := c.Query("id")
 	contractor_id := c.Query("contractor_id")
@@ -226,14 +223,11 @@ func (h *Handler) GetAllBids(c *gin.Context) {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /bids/delete [delete]
+// @Router /client/bids/delete [delete]
 func (h *Handler) DeleteBid(c *gin.Context) {
 	Bid_id := c.Query("id")
 
-	user_id := hp.ClaimData(c, "user_id")
-	if user_id == "" {
-		return
-	}
+	user_id := hp.GetUserId(c)
 
 	_, err := h.Clients.Bid.Delete(context.Background(), &models.DeleteBidReq{Id: Bid_id, ContractorId: user_id})
 	if err != nil {

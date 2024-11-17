@@ -48,22 +48,18 @@ func NewApi(h *handlers.Handler) *gin.Engine {
 	client := router.Group("/client").Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("client"))
 	{
 		client.POST("/tenders", h.CreateTender)
-		client.GET("/tenders", h.ListTenders)
 		client.PUT("/tenders/:id", h.UpdateTender)
 		client.DELETE("/tenders/:id", h.DeleteTender)
 	}
+	router.GET("/tenders", h.ListTenders).Use(middleware.AuthMiddleware())
 
-	bid := router.Group("/client/tenders").Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("client"))
-	{
-		bid.POST("/:id/bids", h.CreateTender)
-		bid.GET("/:id/bids", h.ListTenders)
-		bid.PUT("/:id/award/:bid_id", h.UpdateTender)
-		bid.GET("/:id/bids", h.DeleteTender)
-	}
-
-	router.DELETE("/bids/delete", h.DeleteTender)
+	router.POST("/:id/bids", h.CreateBid).Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("contractor"))
+	router.GET("/:id/bids", h.GetAllBids).Use(middleware.AuthMiddleware())
+	router.GET("/:id/bid", h.GetByIdBid).Use(middleware.AuthMiddleware())
+	router.PUT("/:id/award/:bid_id", h.UpdateBid).Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("client"))
+	router.DELETE("/bids/delete", h.DeleteBid).Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("contractor"))
 	
-	router.POST("/img-upload", h.UploadFile)
+	router.POST("/img-upload", h.UploadFile).Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("client"))
 
 	return router
 }
