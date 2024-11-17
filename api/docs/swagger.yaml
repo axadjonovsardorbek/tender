@@ -23,15 +23,12 @@ definitions:
       budget:
         type: number
       client_id:
-        type: integer
+        type: string
       deadline:
         type: string
       description:
         type: string
       id:
-        type: integer
-      status:
-        description: '"open", "closed", "awarded"'
         type: string
       title:
         type: string
@@ -75,30 +72,7 @@ info:
   title: Pima
   version: "1.0"
 paths:
-  /img-upload:
-    post:
-      consumes:
-      - multipart/form-data
-      description: File upload
-      parameters:
-      - description: File
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-      security:
-      - BearerAuth: []
-      summary: File upload
-      tags:
-      - file-upload
-  /login:
+  /auth/login:
     post:
       consumes:
       - application/json
@@ -125,11 +99,13 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - BearerAuth: []
       summary: Login
       tags:
       - auth
-  /profile:
-    post:
+  /auth/profile:
+    get:
       consumes:
       - application/json
       description: Get profile
@@ -148,11 +124,13 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - BearerAuth: []
       summary: Profile
       tags:
       - auth
-  /profile/delete:
-    post:
+  /auth/profile/delete:
+    delete:
       consumes:
       - application/json
       description: Delete profile
@@ -171,11 +149,13 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - BearerAuth: []
       summary: DeleteProfile
       tags:
       - auth
-  /profile/update:
-    post:
+  /auth/profile/update:
+    put:
       consumes:
       - application/json
       description: Update profile
@@ -201,10 +181,12 @@ paths:
           description: Server error
           schema:
             type: string
+      security:
+      - BearerAuth: []
       summary: UpdateProfile
       tags:
       - auth
-  /register:
+  /auth/register:
     post:
       consumes:
       - application/json
@@ -233,9 +215,33 @@ paths:
             type: string
       security:
       - BearerAuth: []
+      - BearerAuth: []
       summary: Register
       tags:
       - auth
+  /img-upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: File upload
+      parameters:
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: File upload
+      tags:
+      - file-upload
   /tender/create:
     post:
       consumes:

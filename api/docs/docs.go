@@ -15,45 +15,13 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/img-upload": {
+        "/auth/login": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "File upload",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "file-upload"
-                ],
-                "summary": "File upload",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "File",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/login": {
-            "post": {
                 "description": "Authenticate user with username and password",
                 "consumes": [
                     "application/json"
@@ -98,8 +66,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile": {
-            "post": {
+        "/auth/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get profile",
                 "consumes": [
                     "application/json"
@@ -133,8 +106,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/delete": {
-            "post": {
+        "/auth/profile/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete profile",
                 "consumes": [
                     "application/json"
@@ -168,8 +146,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/update": {
-            "post": {
+        "/auth/profile/update": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update profile",
                 "consumes": [
                     "application/json"
@@ -214,9 +197,12 @@ const docTemplate = `{
                 }
             }
         },
-        "/register": {
+        "/auth/register": {
             "post": {
                 "security": [
+                    {
+                        "BearerAuth": []
+                    },
                     {
                         "BearerAuth": []
                     }
@@ -258,6 +244,43 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/img-upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "File upload",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "file-upload"
+                ],
+                "summary": "File upload",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "string"
                         }
@@ -353,7 +376,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "client_id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "deadline": {
                     "type": "string"
@@ -362,10 +385,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
-                },
-                "status": {
-                    "description": "\"open\", \"closed\", \"awarded\"",
                     "type": "string"
                 },
                 "title": {

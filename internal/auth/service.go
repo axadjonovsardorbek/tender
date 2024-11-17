@@ -30,6 +30,15 @@ func (s *AuthService) Login(ctx context.Context, req *models.LoginReq) (*models.
 	}
 	return res, err
 }
+func (s *AuthService) IsEmailTaken(ctx context.Context, email string) (bool, error) {
+	res, err := s.Auth.IsEmailExist(ctx, email)
+
+	if err != nil {
+		return false, err
+	}
+	return res, err
+}
+
 func (s *AuthService) GetProfile(ctx context.Context, id string) (*models.UserRes, error) {
 	res, err := s.Auth.GetProfile(ctx, id)
 

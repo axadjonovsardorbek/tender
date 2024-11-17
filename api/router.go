@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/axadjonovsardorbek/tender/api/handlers"
@@ -21,11 +20,10 @@ import (
 // @in header
 // @name Authorization
 func NewApi(h *handlers.Handler) *gin.Engine {
-	fmt.Println("qqqqqqqqqqqqqqqqqqqqq")
+
 	router := gin.Default()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-
 
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -36,12 +34,21 @@ func NewApi(h *handlers.Handler) *gin.Engine {
 		MaxAge:           24 * time.Hour,
 	}))
 
-	router.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/api/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	fmt.Println("ddddddddddddddd")
+	
+	router.POST("/register", h.Register)
+	router.POST("/login", h.Login)
+	router.GET("/profile", h.Profile)
+	router.PUT("/profile/update", h.UpdateProfile)
+	router.DELETE("/profile/delete", h.DeleteProfile)
+	
 
-	router.POST("tender/create", h.CreateTender)
-
+	client := router.Group("/client")
+	{
+		client.POST("/tenders", h.CreateTender)
+	}
+	
 	router.POST("/img-upload", h.UploadFile)
 
 	return router

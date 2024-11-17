@@ -19,6 +19,7 @@ import (
 type AuthI interface {
 	Register(context.Context, *models.RegisterReq) (*models.TokenRes, error)
 	Login(context.Context, *models.LoginReq) (*models.TokenRes, error)
+	IsEmailExist(context.Context, string) (bool, error)
 	GetProfile(context.Context, string) (*models.UserRes, error)
 	UpdateProfile(context.Context, *models.UpdateReq) (*models.Void, error)
 	DeleteProfile(context.Context, string) (*models.Void, error)
@@ -113,6 +114,22 @@ func (r *AuthRepo) Login(ctx context.Context, req *models.LoginReq) (*models.Tok
 		Role:         role,
 		Id:           id,
 	}, nil
+}
+
+func (r *AuthRepo) IsEmailExist(ctx context.Context, email string) (bool, error) {
+    query := `SELECT email FROM users WHERE email = $1 AND deleted_at = 0`
+	row := r.db.QueryRow(query, email)
+	
+	var emailExists string
+	err := row.Scan(&emailExists)
+	if err == sql.ErrNoRows {
+        return false, nil
+    }
+	if err!= nil {
+        return false, err
+    }
+
+	return emailExists!= "", nil
 }
 
 func (r *AuthRepo) GetProfile(ctx context.Context, id string) (*models.UserRes, error) {
