@@ -55,6 +55,7 @@ func (h *Handler) CreateTender(c *gin.Context) {
 	if err != nil {
 		c.JSON(500, gin.H{"Error": err})
 		slog.Error("Error creating tender: ", "err", err)
+		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -94,12 +95,16 @@ func (h *Handler) ListTenders(c *gin.Context) {
 	if err != nil {
 		if err.Error() == "not found" {
 			c.JSON(500, gin.H{"message": "not_found"})
+			hp.SmsSender(c, err, http.StatusInternalServerError)
 			return
-		}else {
+		} else {
 			c.JSON(500, gin.H{"message": err})
 			slog.Error("Error listing tenders: ", "err", err)
+			hp.SmsSender(c, err, http.StatusInternalServerError)
 			return
+			
 		}
+		
 	}
 
 	res = *resp
@@ -149,10 +154,12 @@ func (h *Handler) UpdateTender(c *gin.Context) {
 	if err != nil {
 		if err.Error() == "not found" {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Tender not found"})
+			hp.SmsSender(c, err, http.StatusNotFound)
 			return
 		}
 		c.JSON(500, gin.H{"Error": err})
 		slog.Error("Error updating tender: ", "err", err)
+		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -183,10 +190,12 @@ func (h *Handler) DeleteTender(c *gin.Context) {
 	if err != nil {
 		if err.Error() == "not found" {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Tender not found or access denied"})
+			hp.SmsSender(c, err, http.StatusNotFound)
 			return
 		}
 		c.JSON(500, gin.H{"Error": err})
 		slog.Error("Error deleting tender: ", "err", err)
+		hp.SmsSender(c, err, http.StatusInternalServerError)
 		return
 	}
 

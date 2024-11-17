@@ -3,6 +3,7 @@ package bid
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -82,6 +83,10 @@ func (r *BidRepo) GetById(ctx context.Context, id string) (*models.BidRes, error
 		&bid.CreatedAt,
 	)
 
+	if err == sql.ErrNoRows {
+		return nil, errors.New("not found")
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +146,7 @@ func (r *BidRepo) GetAll(ctx context.Context, req *models.GetAllBidReq) (*models
 
 	rows, err := r.db.Query(query, args...)
 	if err == sql.ErrNoRows {
-		return &bids, nil
+		return nil, errors.New("not found")
 	}
 
 	if err != nil {

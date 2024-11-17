@@ -246,7 +246,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/categories/update": {
+        "/bids/update": {
             "put": {
                 "security": [
                     {
@@ -261,7 +261,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "categories"
+                    "bid"
                 ],
                 "summary": "Update an Bid",
                 "parameters": [

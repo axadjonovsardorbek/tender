@@ -239,7 +239,7 @@
                 }
             }
         },
-        "/categories/update": {
+        "/bids/update": {
             "put": {
                 "security": [
                     {
@@ -254,7 +254,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "categories"
+                    "bid"
                 ],
                 "summary": "Update an Bid",
                 "parameters": [

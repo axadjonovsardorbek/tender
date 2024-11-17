@@ -41,8 +41,5 @@ insert_file:
 build:
 	CGO_ENABLED=0 GOOS=darwin go build -mod=vendor -a -installsuffix cgo -o ${CURRENT_DIR}/bin/${APP} ${APP_CMD_DIR}/main.go
 
-swag-init:
-	swag init -g api/api.go -o api/docs
-
 swag-gen:
 	~/go/bin/swag init -g ./api/router.go -o api/docs force 1	

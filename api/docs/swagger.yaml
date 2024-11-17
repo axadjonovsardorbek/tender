@@ -265,7 +265,7 @@ paths:
       summary: Get all Bids
       tags:
       - bid
-  /categories/update:
+  /bids/update:
     put:
       consumes:
       - application/json
@@ -300,7 +300,7 @@ paths:
       - BearerAuth: []
       summary: Update an Bid
       tags:
-      - categories
+      - bid
   /client/tenders:
     get:
       consumes:
