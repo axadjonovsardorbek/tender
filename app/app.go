@@ -40,12 +40,11 @@ func (a *App) Initialize(cfg *config.Config) {
 
 	//Initialize MinIO
 	minioClient, err := platform.MinIOConnect(cfg)
-    if err!= nil {
-        log.Fatalf("Failed to connect to MinIO: %v", err)
-    }
-    a.MinIO = minioClient
+	if err != nil {
+		log.Fatalf("Failed to connect to MinIO: %v", err)
+	}
+	a.MinIO = minioClient
 
- 
 	// Initialize clients
 	services, err := clients.NewClients(cfg, stg)
 	if err != nil {

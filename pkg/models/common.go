@@ -8,6 +8,6 @@ type ById struct {
 }
 
 type Filter struct {
-	Limit int `json:"limit"`
+	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
 }

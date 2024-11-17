@@ -1,5 +1,42 @@
 basePath: /
 definitions:
+  models.ApiCreateBidReq:
+    properties:
+      comments:
+        type: string
+      contractor_id:
+        type: string
+      delivery_time:
+        type: integer
+      price:
+        type: integer
+      tender_id:
+        type: string
+    type: object
+  models.ApiUpdateBidReq:
+    properties:
+      status:
+        type: string
+    type: object
+  models.BidRes:
+    properties:
+      comments:
+        type: string
+      contractor_id:
+        type: string
+      created_at:
+        type: string
+      delivery_time:
+        type: integer
+      id:
+        type: string
+      price:
+        type: integer
+      status:
+        type: string
+      tender_id:
+        type: string
+    type: object
   models.CreateTenderReq:
     properties:
       budget:
@@ -12,6 +49,15 @@ definitions:
         type: string
       title:
         type: string
+    type: object
+  models.GetAllBidRes:
+    properties:
+      bids:
+        items:
+          $ref: '#/definitions/models.BidRes'
+        type: array
+      total_count:
+        type: integer
     type: object
   models.LoginReq:
     properties:
@@ -42,11 +88,9 @@ definitions:
       role:
         type: string
     type: object
-  models.UpdateReq:
+  models.UpdateProfile:
     properties:
       email:
-        type: string
-      id:
         type: string
       username:
         type: string
@@ -75,6 +119,188 @@ info:
   title: Pima
   version: "1.0"
 paths:
+  /bids:
+    post:
+      consumes:
+      - application/json
+      description: Create a new bid with the provided details
+      parameters:
+      - description: Bid Details
+        in: body
+        name: bid
+        required: true
+        schema:
+          $ref: '#/definitions/models.ApiCreateBidReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create a new bid
+      tags:
+      - bid
+  /bids/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an Bid by ID
+      parameters:
+      - description: Bid ID
+        in: query
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Bid deleted successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Delete an Bid
+      tags:
+      - bid
+  /bids/get:
+    get:
+      consumes:
+      - application/json
+      description: Get Bid by their ID
+      parameters:
+      - description: Bid ID
+        in: query
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BidRes'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get Bid by ID
+      tags:
+      - bid
+  /bids/list:
+    get:
+      consumes:
+      - application/json
+      description: Get all Bids with optional filtering
+      parameters:
+      - description: TenderId
+        in: query
+        name: tender_id
+        type: string
+      - description: ContractorId
+        in: query
+        name: contractor_id
+        type: string
+      - description: DeliveryTime
+        in: query
+        name: delivery_time
+        type: string
+      - description: Price
+        in: query
+        name: price
+        type: string
+      - description: SortType
+        in: query
+        name: sort_type
+        type: string
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetAllBidRes'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get all Bids
+      tags:
+      - bid
+  /categories/update:
+    put:
+      consumes:
+      - application/json
+      description: Update an Bid's details
+      parameters:
+      - description: Bid ID
+        in: query
+        name: id
+        type: string
+      - description: Bid Update Details
+        in: body
+        name: bid
+        required: true
+        schema:
+          $ref: '#/definitions/models.ApiUpdateBidReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Update an Bid
+      tags:
+      - categories
   /client/tenders:
     get:
       consumes:
@@ -310,7 +536,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/models.UpdateReq'
+          $ref: '#/definitions/models.UpdateProfile'
       produces:
       - application/json
       responses:

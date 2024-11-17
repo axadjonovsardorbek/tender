@@ -97,3 +97,4 @@ CREATE TRIGGER check_relation_id
 BEFORE INSERT OR UPDATE ON notifications
 FOR EACH ROW
 EXECUTE FUNCTION validate_relation_id();
+

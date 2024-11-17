@@ -7,6 +7,7 @@ import (
 
 	"github.com/axadjonovsardorbek/tender/config"
 	"github.com/axadjonovsardorbek/tender/internal/auth"
+	"github.com/axadjonovsardorbek/tender/internal/bid"
 	"github.com/axadjonovsardorbek/tender/internal/tender"
 
 	_ "github.com/lib/pq"
@@ -17,6 +18,7 @@ type Storage struct {
 	Db      *sql.DB
 	TenderS tender.TenderI
 	AuthS   auth.AuthI
+	BidS    bid.BidI
 }
 
 // ConnectDatabase initializes the Postgres connection
@@ -37,12 +39,15 @@ func ConnectDatabase(cfg *config.Config) (*Storage, error) {
 
 	tender := tender.NewTenderRepository(db)
 	auth := auth.NewAuthRepo(db)
+	bid := bid.NewBidRepo(db)
 
 	log.Println("Connected to the Postgres database.")
 	return &Storage{
 		Db:      db,
 		TenderS: tender,
-		AuthS:   auth}, nil
+		AuthS:   auth,
+		BidS:    bid,
+	}, nil
 }
 
 // Close closes the database connection
