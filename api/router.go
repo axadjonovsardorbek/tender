@@ -52,6 +52,16 @@ func NewApi(h *handlers.Handler) *gin.Engine {
 		client.PUT("/tenders/:id", h.UpdateTender)
 		client.DELETE("/tenders/:id", h.DeleteTender)
 	}
+
+	bid := router.Group("/client/tenders").Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("client"))
+	{
+		bid.POST("/:id/bids", h.CreateTender)
+		bid.GET("/:id/bids", h.ListTenders)
+		bid.PUT("/:id/award/:bid_id", h.UpdateTender)
+		bid.GET("/:id/bids", h.DeleteTender)
+	}
+
+	router.DELETE("/bids/delete", h.DeleteTender)
 	
 	router.POST("/img-upload", h.UploadFile)
 

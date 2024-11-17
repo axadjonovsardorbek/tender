@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS tenders (
     client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
-    deadline TIMESTAMP NOT NULL,
+    deadline TIMESTAMP NOT NULL CHECK (deadline > NOW()),
     budget BIGINT NOT NULL CHECK (budget > 0),
     status status_tender DEFAULT 'open',
     file_url VARCHAR(255),
@@ -98,3 +98,71 @@ BEFORE INSERT OR UPDATE ON notifications
 FOR EACH ROW
 EXECUTE FUNCTION validate_relation_id();
 
+-- Tenderning statusi "open" ekanligini tekshiruvchi funksiya
+CREATE OR REPLACE FUNCTION check_tender_status()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Tenderning statusini tekshirish
+    IF NOT EXISTS (
+        SELECT 1
+        FROM tenders
+        WHERE id = NEW.tender_id AND status = 'open'
+    ) THEN
+        RAISE EXCEPTION 'Bid cannot be created because the tender status is not open';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- Triggerni yaratish
+CREATE TRIGGER enforce_tender_status
+BEFORE INSERT ON bids
+FOR EACH ROW
+EXECUTE FUNCTION check_tender_status();
+
+
+-- Trigger Function to Check Bid Limit
+CREATE OR REPLACE FUNCTION check_bid_limit()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Check if the contractor has already created 5 bids in the last minute
+    IF (
+        SELECT COUNT(*) 
+        FROM bids 
+        WHERE contractor_id = NEW.contractor_id 
+          AND created_at > NOW() - INTERVAL '1 minute'
+    ) >= 5 THEN
+        RAISE EXCEPTION 'A contractor can only create up to 5 bids in one minute.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the Trigger
+CREATE TRIGGER enforce_bid_limit
+BEFORE INSERT ON bids
+FOR EACH ROW
+EXECUTE FUNCTION check_bid_limit();
+
+
+-- Trigger funksiyasini yaratish
+CREATE OR REPLACE FUNCTION prevent_status_change_after_awarded()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Agar eski status 'awarded' bo'lsa va yangi status boshqa holat bo'lsa, xato qaytar
+    IF OLD.status = 'awarded' AND NEW.status != 'awarded' THEN
+        RAISE EXCEPTION 'Status cannot be changed once it is set to "awarded"';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Triggerni yaratish
+CREATE TRIGGER enforce_awarded_status
+BEFORE UPDATE ON tenders
+FOR EACH ROW
+EXECUTE FUNCTION prevent_status_change_after_awarded();

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -139,7 +138,6 @@ func (h *Handler) Profile(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("lllllllllllllllllll", user_id)
 	resp, err := h.Clients.Auth.GetProfile(context.Background(), user_id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

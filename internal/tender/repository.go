@@ -43,7 +43,8 @@ func (r *TenderRepository) GetById(ctx context.Context, id *models.ById) (*model
 				deadline, 
 				budget, 
 				status, 
-				client_id 
+				client_id,
+				file_url
 			FROM 
 				tenders 
 			WHERE id = $1 AND deleted_at = 0`
@@ -55,6 +56,7 @@ func (r *TenderRepository) GetById(ctx context.Context, id *models.ById) (*model
 		&tender.Deadline,
 		&tender.Budget,
 		&tender.ClientID,
+		&tender.FileUrl,
 	)
 
 	if err == sql.ErrNoRows {
@@ -72,7 +74,8 @@ func (r *TenderRepository) GetAll(ctx context.Context, req *models.GetAllTenderR
 				deadline, 
 				budget, 
 				status, 
-				client_id 
+				client_id,
+				file_url
 			FROM 
 				tenders
 			WHERE deleted_at = 0`
@@ -98,6 +101,7 @@ func (r *TenderRepository) GetAll(ctx context.Context, req *models.GetAllTenderR
 			&tender.Budget,
 			&tender.Status,
 			&tender.ClientID,
+			&tender.FileUrl,
 		); err != nil {
 			return nil, err
 		}

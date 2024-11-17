@@ -23,7 +23,7 @@ import (
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /bids [post]
+// @Router /tenders/{id}/bids [post]
 func (h *Handler) CreateBid(c *gin.Context) {
 	user_id := hp.ClaimData(c, "user_id")
 	if user_id == "" {
@@ -69,12 +69,17 @@ func (h *Handler) CreateBid(c *gin.Context) {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /bids/get [get]
+// @Router /tenders/{id}/bids [get]
 func (h *Handler) GetByIdBid(c *gin.Context) {
 	bid_id := c.Query("id")
 
 	res, err := h.Clients.Bid.GetById(context.Background(), bid_id)
 	if err != nil {
+		if err.Error() == "not found" {
+			c.JSON(http.StatusNotFound, gin.H{"message": "Bid not found or access denied"})
+			hp.SmsSender(c, err, http.StatusNotFound)
+			return
+		}
 		c.JSON(500, gin.H{"Error": err})
 		slog.Error("Error getting Bid by ID: ", err)
 		hp.SmsSender(c, err, http.StatusInternalServerError)
@@ -88,16 +93,16 @@ func (h *Handler) GetByIdBid(c *gin.Context) {
 // UpdateBid godoc
 // @Summary Update an Bid
 // @Description Update an Bid's details
-// @Tags categories
+// @Tags bid
 // @Accept  json
 // @Produce  json
-// @Param id query string false "Bid ID"
+// @Param bid_id query string false "Bid ID"
 // @Param bid body models.ApiUpdateBidReq true "Bid Update Details"
 // @Success 200 {object} string
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /categories/update [put]
+// @Router /tenders/{id}/award/{bid_id} [put]
 func (h *Handler) UpdateBid(c *gin.Context) {
 	reqBody := models.ApiUpdateBidReq{}
 
@@ -110,7 +115,7 @@ func (h *Handler) UpdateBid(c *gin.Context) {
 	}
 
 	req := models.UpdateBidReq{
-		Id:     c.Query("id"),
+		Id:     c.Query("bid_id"),
 		Status: reqBody.Status,
 	}
 
@@ -132,7 +137,7 @@ func (h *Handler) UpdateBid(c *gin.Context) {
 // @Tags bid
 // @Accept  json
 // @Produce  json
-// @Param tender_id query string false "TenderId"
+// @Param id query string false "TenderId"
 // @Param contractor_id query string false "ContractorId"
 // @Param delivery_time query string false "DeliveryTime"
 // @Param price query string false "Price"
@@ -143,12 +148,12 @@ func (h *Handler) UpdateBid(c *gin.Context) {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Security BearerAuth
-// @Router /bids/list [get]
+// @Router /tenders/{id}/bids [get]
 func (h *Handler) GetAllBids(c *gin.Context) {
-	tender_id := c.Query("tender_id")
+	tender_id := c.Query("id")
 	contractor_id := c.Query("contractor_id")
-	// delivery_time := c.Query("delivery_time")
-	// price := c.Query("price")
+	delivery_time := c.Query("delivery_time")
+	price := c.Query("price")
 	sort_type := c.Query("sort_type")
 	limit := c.Query("limit")
 	offset := c.Query("offset")
@@ -161,11 +166,31 @@ func (h *Handler) GetAllBids(c *gin.Context) {
 		return
 	}
 
+	var priceValue int64
+	var timeValue int64
+	if price != "" {
+		parsedPrice, err := strconv.Atoi(price)
+		if err != nil {
+			slog.Error("Invalid limit value", err)
+			c.JSON(400, gin.H{"error": "Invalid price value"})
+		}
+		priceValue = int64(parsedPrice)
+	}
+
+	if delivery_time != "" {
+		parsedTime, err := strconv.Atoi(delivery_time)
+		if err != nil {
+			slog.Error("Invalid offset value", err)
+			c.JSON(400, gin.H{"error": "Invalid deliver time value"})
+		}
+		timeValue = int64(parsedTime)
+	}
+
 	req := &models.GetAllBidReq{
 		TenderId:     tender_id,
 		ContractorId: contractor_id,
-		// Price:        int64(price),
-		// DeliveryTime: delivery_time,
+		Price:        priceValue,
+		DeliveryTime: timeValue,
 		SortType:     sort_type,
 		Filter: models.Filter{
 			Limit:  int(limitValue),
@@ -175,6 +200,11 @@ func (h *Handler) GetAllBids(c *gin.Context) {
 
 	res, err := h.Clients.Bid.GetAll(context.Background(), req)
 	if err != nil {
+		if err.Error() == "not found" {
+			c.JSON(http.StatusNotFound, gin.H{"message": "Bid not found or access denied"})
+			hp.SmsSender(c, err, http.StatusNotFound)
+			return
+		}
 		c.JSON(500, gin.H{"Error": err})
 		slog.Error("Error getting Bids: ", err)
 		hp.SmsSender(c, err, http.StatusInternalServerError)

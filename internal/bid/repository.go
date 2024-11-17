@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
+
 	"fmt"
 	"log"
 	"strconv"
@@ -133,6 +135,10 @@ func (r *BidRepo) GetById(ctx context.Context, id string) (*models.BidRes, error
 		&bid.CreatedAt,
 	)
 
+	if err == sql.ErrNoRows {
+		return nil, errors.New("not found")
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +198,7 @@ func (r *BidRepo) GetAll(ctx context.Context, req *models.GetAllBidReq) (*models
 
 	rows, err := r.db.Query(query, args...)
 	if err == sql.ErrNoRows {
-		return &bids, nil
+		return nil, errors.New("not found")
 	}
 
 	if err != nil {
@@ -390,6 +396,21 @@ func (r *BidRepo) Update(ctx context.Context, req *models.UpdateBidReq) (*models
 			return nil, fmt.Errorf("tender with id %s couldn't awarded", req.Id)
 		}
 	}
+
+	// Send the notification to WebSocket clients
+	notification := map[string]interface{}{
+		"message": req.Status,
+		"bid_id": req.Id,
+	}
+	notificationJSON, err := json.Marshal(notification)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		message := []byte(notificationJSON)
+		websocket.BroadcastMessage(message)
+	}()
 
 	return nil, fmt.Errorf("invalid status")
 }
