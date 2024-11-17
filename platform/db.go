@@ -8,7 +8,6 @@ import (
 	"github.com/axadjonovsardorbek/tender/config"
 	"github.com/axadjonovsardorbek/tender/internal/auth"
 	"github.com/axadjonovsardorbek/tender/internal/tender"
-	"github.com/go-redis/redis/v8"
 
 	_ "github.com/lib/pq"
 )
@@ -36,14 +35,8 @@ func ConnectDatabase(cfg *config.Config) (*Storage, error) {
 		return nil, err
 	}
 
-	rAddr := fmt.Sprintf("%s:%s", config.Load().RedisHost, config.Load().RedisPort)
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr: rAddr,
-	})
-
 	tender := tender.NewTenderRepository(db)
-	auth := auth.NewAuthRepo(db, rdb)
+	auth := auth.NewAuthRepo(db)
 
 	log.Println("Connected to the Postgres database.")
 	return &Storage{

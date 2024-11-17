@@ -30,14 +30,14 @@ func (r *TenderRepository) Create(ctx context.Context, tender *models.Tender) (*
 		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
 	`
 	var id int64
-	err := r.DB.QueryRowContext(ctx, query, tender.Title, tender.Description, tender.Deadline, tender.Budget, tender.Status, tender.ClientID).Scan(&id)
+	err := r.DB.QueryRowContext(ctx, query, tender.Title, tender.Description, tender.Deadline, tender.Budget, "open", tender.ClientID).Scan(&id)
 	return nil, err
 }
 
 func (r *TenderRepository) GetById(ctx context.Context, id *models.ById) (*models.Tender, error) {
 	query := `SELECT id, title, description, deadline, budget, status, client_id FROM tenders WHERE id = $1`
 	tender := &models.Tender{}
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&tender.ID, &tender.Title, &tender.Description, &tender.Deadline, &tender.Budget, &tender.Status, &tender.ClientID)
+	err := r.DB.QueryRowContext(ctx, query, id).Scan(&tender.ID, &tender.Title, &tender.Description, &tender.Deadline, &tender.Budget, &tender.ClientID)
 	return tender, err
 }
 
@@ -52,7 +52,7 @@ func (r *TenderRepository) GetAll(ctx context.Context, req *models.GetAllTenderR
 	var tenders *models.GetAllTenderRes
 	for rows.Next() {
 		tender := &models.Tender{}
-		if err := rows.Scan(&tender.ID, &tender.Title, &tender.Description, &tender.Deadline, &tender.Budget, &tender.Status, &tender.ClientID); err != nil {
+		if err := rows.Scan(&tender.ID, &tender.Title, &tender.Description, &tender.Deadline, &tender.Budget, &tender.ClientID); err != nil {
 			return nil, err
 		}
 		tenders.Tenders = append(tenders.Tenders, tender)

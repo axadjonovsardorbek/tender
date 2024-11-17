@@ -7,7 +7,11 @@ import (
 )
 
 type AuthService struct {
-	Auth AuthRepo
+	Auth AuthI
+}
+
+func NewAuthService(repo *AuthI) *AuthService {
+    return &AuthService{Auth: *repo}
 }
 
 func (s *AuthService) Register(ctx context.Context, req *models.RegisterReq) (*models.TokenRes, error) {
@@ -26,6 +30,15 @@ func (s *AuthService) Login(ctx context.Context, req *models.LoginReq) (*models.
 	}
 	return res, err
 }
+func (s *AuthService) IsEmailTaken(ctx context.Context, email string) (bool, error) {
+	res, err := s.Auth.IsEmailExist(ctx, email)
+
+	if err != nil {
+		return false, err
+	}
+	return res, err
+}
+
 func (s *AuthService) GetProfile(ctx context.Context, id string) (*models.UserRes, error) {
 	res, err := s.Auth.GetProfile(ctx, id)
 

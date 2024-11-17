@@ -44,6 +44,12 @@ func Load() Config {
 
 	config.ServerPort = cast.ToString(coalesce("SERVER_PORT", ":8080"))
 
+	config.EmailName = cast.ToString(coalesce("EMAIL_NAME", "email"))
+	config.EmailPassword = cast.ToString(coalesce("EMAIL_PASSWORD", "password"))
+
+	config.GroupId = cast.ToString(coalesce("GROUP_ID", "group"))
+	config.BotToken = cast.ToString(coalesce("BOT_TOKEN", "bot"))
+
 	return config
 }
 

@@ -4,19 +4,20 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/axadjonovsardorbek/tender/api"
+	"github.com/axadjonovsardorbek/tender/api/handlers"
 	"github.com/axadjonovsardorbek/tender/clients"
 	"github.com/axadjonovsardorbek/tender/config"
-	"github.com/axadjonovsardorbek/tender/internal"
 	"github.com/axadjonovsardorbek/tender/platform"
-
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 type App struct {
-	Router      *mux.Router
+	Router      *gin.Engine
 	Storage     *platform.Storage
 	RedisClient *platform.Redis
 	WsHub       *platform.WebSocketHub
+	MinIO       *platform.MinIO
 }
 
 func (a *App) Initialize(cfg *config.Config) {
@@ -36,19 +37,23 @@ func (a *App) Initialize(cfg *config.Config) {
 	a.WsHub = wsHub
 	go wsHub.Run()
 
+	//Initialize MinIO
+	minioClient, err := platform.MinIOConnect(cfg)
+    if err!= nil {
+        log.Fatalf("Failed to connect to MinIO: %v", err)
+    }
+    a.MinIO = minioClient
+
+ 
+	// Initialize clients
 	services, err := clients.NewClients(cfg, stg)
 	if err != nil {
 		log.Fatalf("error while connecting clients. err: %s", err.Error())
 	}
 
-	handler := internal.NewHandler(*services)
+	handler := handlers.NewHandler(*services, minioClient)
 
-	// Setup router
-	internal.RegisterRoutes(a.Router, handler)
-
-	// Setup Router
-	a.Router = mux.NewRouter()
-	// TODO: Add routes here
+	a.Router = api.NewApi(handler)
 }
 
 func (a *App) Run(serverPort string) {

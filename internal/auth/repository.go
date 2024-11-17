@@ -3,17 +3,14 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/axadjonovsardorbek/tender/pkg/models"
 	token "github.com/axadjonovsardorbek/tender/pkg/utils"
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 
 	"golang.org/x/crypto/bcrypt"
@@ -22,18 +19,18 @@ import (
 type AuthI interface {
 	Register(context.Context, *models.RegisterReq) (*models.TokenRes, error)
 	Login(context.Context, *models.LoginReq) (*models.TokenRes, error)
+	IsEmailExist(context.Context, string) (bool, error)
 	GetProfile(context.Context, string) (*models.UserRes, error)
 	UpdateProfile(context.Context, *models.UpdateReq) (*models.Void, error)
 	DeleteProfile(context.Context, string) (*models.Void, error)
 }
 
 type AuthRepo struct {
-	db  *sql.DB
-	rdb *redis.Client
+	db *sql.DB
 }
 
-func NewAuthRepo(db *sql.DB, rdb *redis.Client) *AuthRepo {
-	return &AuthRepo{db: db, rdb: rdb}
+func NewAuthRepo(db *sql.DB) *AuthRepo {
+	return &AuthRepo{db: db}
 }
 
 func (r *AuthRepo) Register(ctx context.Context, req *models.RegisterReq) (*models.TokenRes, error) {
@@ -119,64 +116,54 @@ func (r *AuthRepo) Login(ctx context.Context, req *models.LoginReq) (*models.Tok
 	}, nil
 }
 
+func (r *AuthRepo) IsEmailExist(ctx context.Context, email string) (bool, error) {
+    query := `SELECT email FROM users WHERE email = $1 AND deleted_at = 0`
+	row := r.db.QueryRow(query, email)
+	
+	var emailExists string
+	err := row.Scan(&emailExists)
+	if err == sql.ErrNoRows {
+        return false, nil
+    }
+	if err!= nil {
+        return false, err
+    }
+
+	return emailExists!= "", nil
+}
+
 func (r *AuthRepo) GetProfile(ctx context.Context, id string) (*models.UserRes, error) {
-	userData, err := r.rdb.Get(context.Background(), id).Result()
-	if err == redis.Nil {
-		user := models.UserRes{}
-		query := `
-	SELECT
-		id,
-		username,
-		email,
-		to_char(created_at, 'YYYY-MM-DD HH24:MI'),
-		role
-	FROM
-		users
-	WHERE
-		id = $1
-	AND
-		deleted_at = 0
-	`
-
-		row := r.db.QueryRow(query, id)
-		err := row.Scan(
-			&user.Id,
-			&user.Username,
-			&user.Email,
-			&user.CreatedAt,
-			&user.Role,
-		)
-
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Println("Successfully got profile")
-
-		jsonData, err := json.Marshal(user)
-		if err != nil {
-			log.Printf("JSON marshalling error: %v", err)
-			return nil, err
-		}
-		err = r.rdb.Set(context.Background(), id, jsonData, 5*time.Minute).Err()
-		if err != nil {
-			log.Printf("Redis set error: %v", err)
-			return nil, err
-		}
-
-		return &user, nil
-	} else if err != nil {
-		log.Printf("Redis get error: %v", err)
-		return nil, err
-	}
-
 	user := models.UserRes{}
+	query := `
+SELECT
+	id,
+	username,
+	email,
+	to_char(created_at, 'YYYY-MM-DD HH24:MI'),
+	role
+FROM
+	users
+WHERE
+	id = $1
+AND
+	deleted_at = 0
+`
 
-	err = json.Unmarshal([]byte(userData), user)
+	row := r.db.QueryRow(query, id)
+	err := row.Scan(
+		&user.Id,
+		&user.Username,
+		&user.Email,
+		&user.CreatedAt,
+		&user.Role,
+	)
+
 	if err != nil {
-		log.Printf("JSON unmarshalling error: %v", err)
 		return nil, err
 	}
+
+	fmt.Println("Successfully got profile")
+
 	return &user, nil
 }
 func (r *AuthRepo) UpdateProfile(ctx context.Context, req *models.UpdateReq) (*models.Void, error) {

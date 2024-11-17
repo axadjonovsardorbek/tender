@@ -6,14 +6,6 @@ import (
 	"github.com/axadjonovsardorbek/tender/pkg/models"
 )
 
-type Service interface {
-	CreateTender(ctx context.Context, req *models.Tender) (*models.Void, error)
-	GetTender(ctx context.Context, req *models.ById) (*models.Tender, error)
-	ListTenders(ctx context.Context, req *models.GetAllTenderReq) (*models.GetAllTenderRes, error)
-	UpdateTender(ctx context.Context, req *models.ById) (*models.Void, error)
-	DeleteTender(ctx context.Context, req *models.ById) (*models.Void, error)
-}
-
 type TenderService struct {
 	storage TenderI
 }
